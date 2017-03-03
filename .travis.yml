@@ -4,33 +4,52 @@
 language: generic
 
 os: osx
-osx_image: beta-xcode6.1
+osx_image: xcode6.4
 
 env:
   matrix:
     
     - CONDA_PY=27
-    - CONDA_PY=34
     - CONDA_PY=35
+    - CONDA_PY=36
   global:
     # The BINSTAR_TOKEN secure variable. This is defined canonically in conda-forge.yml.
     - secure: "SjCD+wHNFaEAzPg1iRAtcLQZS4pjmsc0A90Rq4RiKJgGK9sn0YUoxRm77Ws8ElFP/nSzPqTrrlE9E9oQFzgCVealLdKmlxkuOV5dYV+tm4WEIzgVLu42RVZnPeH+59vw+vU1GERqvNL2RQISVRmcUCDfeeqOYe2OQa7Pr03gqKC0E89KhxrXlimU2EbHdgEN0X25Jfm2KP51Q+g/9LHLEX9JUSfCdLTbMN2AkHHKBFTHFOFqHyRu5dH1PdKacHC1zmXiLQ3nIbHSggr7m8d9HiUIz/B4WSnPY67nDxxB47CYYwbXBfeD+pQ8/fdzYHDZZ0HSHOirphaQJ1aHyp/06CtprespyRvRzB6o2m2I1U6lehdRxvwmhcsy11hzJegIlFGhDTlpTnpsbq+HBx/BaMfqPWIeVW9dIeUCb/alaWbA/xTix3N0Vd6vExpn1wHJDOm3r4LGd8aYSra0AHsQcYypQUtzKpRS/EHaEVn8JrJZ+hQfbseF80Aa20o8DLFQcQ6xpJXI8Ex9o7EaBitIydV5vdB8ZRrUPgDohiDMPNbw4qBFwcwxjKQHjraXt6Iml0TORObOstekvwOlZJV3LHywMBKTpzePmES6A3D/Nm9O0HQaSDMmMVd3tnCal6vs0mZhaXE+Ll97PF6Ldcacydh2B1k3MMHc2Rv2LS92qOM="
 
 
 before_install:
+    # Fast finish the PR.
+    - |
+      (curl https://raw.githubusercontent.com/conda-forge/conda-forge-build-setup-feedstock/master/recipe/ff_ci_pr_build.py | \
+          python - -v --ci "travis" "${TRAVIS_REPO_SLUG}" "${TRAVIS_BUILD_NUMBER}" "${TRAVIS_PULL_REQUEST}") || exit 1
+
     # Remove homebrew.
-    - brew remove --force $(brew list)
-    - brew cleanup -s
-    - rm -rf $(brew --cache)
+    - |
+      echo ""
+      echo "Removing homebrew from Travis CI to avoid conflicts."
+      curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall > ~/uninstall_homebrew
+      chmod +x ~/uninstall_homebrew
+      ~/uninstall_homebrew -fq
+      rm ~/uninstall_homebrew
+
 
 install:
+    # Install Miniconda.
     - |
-      MINICONDA_URL="http://repo.continuum.io/miniconda"
+      echo ""
+      echo "Installing a fresh version of Miniconda."
+      MINICONDA_URL="https://repo.continuum.io/miniconda"
       MINICONDA_FILE="Miniconda3-latest-MacOSX-x86_64.sh"
-      curl -O "${MINICONDA_URL}/${MINICONDA_FILE}"
+      curl -L -O "${MINICONDA_URL}/${MINICONDA_FILE}"
       bash $MINICONDA_FILE -b
 
+    # Configure conda.
+    - |
+      echo ""
+      echo "Configuring conda."
       source /Users/travis/miniconda3/bin/activate root
+      conda config --remove channels defaults
+      conda config --add channels defaults
       conda config --add channels conda-forge
       conda config --set show_channel_urls true
       conda install --yes --quiet conda-forge-build-setup
