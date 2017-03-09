@@ -1,6 +1,6 @@
 {% set name = "yail" %}
-{% set version = "0.0.1" %}
-{% set sha256 = "3557bb65a94146cb8cb75a3b5392dc27b915d789d3d32283a0a4dd487fdc1c99" %}
+{% set version = "0.0.2" %}
+{% set sha256 = "d86993aee0828e757f0fc737dd16ab80652959f164ed954afe9fdae4ece6b97b" %}
 
 package:
   name: {{ name|lower }}
@@ -26,8 +26,14 @@ requirements:
     - toolz >=0.8.0
 
 test:
+  source_files:
+    - tests
+
   imports:
     - yail
+
+  commands:
+    - python -m unittest discover -s .
 
 about:
   home: https://github.com/jakirkham/yail
